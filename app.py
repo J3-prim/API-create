@@ -15,39 +15,82 @@ users = [
 ]
 
 @app.route('/users/', methods=['GET', 'POST'])
-def welcome():
+def userInt():
     if request.method == 'POST':
       user = request.args
       conn = sqlite3.connect("people.db")
-      response =   requests.get("https://rickandmortyapi.com/api/character/"+user['id'])
-
-      cname = response.json()["name"]
-      cspecies =response.json()["species"]
-      cstatus = response.json()["status"]
-
-      new_data = jsonify({
-            'id': user['id'],
-            'species': cspecies,
-            'name': cname,
-            'status': cstatus,
-            'rating': user['rating']
-        })
-      
       cursor = conn.cursor()
-      cursor.execute("insert into person (id, name, species, status, rating) values (?, ?, ? ,? ,? )",
-            (user['id'],cname,cspecies,cstatus,user['rating']))
+      cursor.execute("SELECT * FROM person WHERE id IN (?)",(user['id']))
+      
 
-      conn.commit()
-      return (new_data) , 201
-    
+      if cursor.fetchall() ==[]:
+        response =   requests.get("https://rickandmortyapi.com/api/character/"+user['id'])
+
+        cname = response.json()["name"]
+        cspecies =response.json()["species"]
+        cstatus = response.json()["status"]
+
+        new_data = jsonify({
+              'id': user['id'],
+              'species': cspecies,
+              'name': cname,
+              'status': cstatus,
+              'rating': user['rating']
+          })
+        
+        cursor = conn.cursor()
+        cursor.execute("insert into person (id, name, species, status, rating) values (?, ?, ? ,? ,? )",
+              (user['id'],cname,cspecies,cstatus,user['rating']))
+
+        conn.commit()
+        conn.close()
+        return (new_data) , 201
+      else:   return "Character id already exists in database",200
+      
     else:
       conn = sqlite3.connect("people.db")
       cur = conn.cursor()
       cur.execute("SELECT * FROM person")
       people = cur.fetchall()
-
+      conn.commit()
+      conn.close() 
       return jsonify(people), 200
 
+@app.route('/delete',methods=['DELETE'])
+def userDel():
 
+    user = request.args
+    conn = sqlite3.connect("people.db")
+    cursor = conn.cursor()
+    localid = (user['id'])
+    cursor.execute("SELECT * FROM person WHERE id IN (?)",localid)
+
+    if cursor.fetchall() ==[]:
+        
+      return "there is no entry for that character to delete" , 201
+    else:  
+      cursor.execute("DELETE FROM person WHERE id = ?",(localid))
+      conn.commit()
+      conn.close()
+      return "character deleted", 500  
+
+@app.route('/edit',methods=['PUT'])
+def entryEdit():
+    user = request.args
+    conn = sqlite3.connect("people.db")
+    cursor = conn.cursor()
+    localid = (user['id'])
+    cursor.execute("SELECT * FROM person WHERE id IN (?)",localid)
+
+    if cursor.fetchall() ==[]:
+        
+      return "there is no entry for that character to update" , 201
+    else:  
+      cursor.execute("UPDATE person SET rating=? WHERE id=?",(user['rating'],localid))
+
+      conn.commit()
+      conn.close()
+    return "character updated", 500  
+   
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=105)
