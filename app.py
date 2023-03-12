@@ -8,11 +8,7 @@ import numpy as np
 #creating an instance of flask
 app = Flask(__name__)
 
-users = [
-    {"species": "Human", "name": "Justin", "status": "Alive", "rating": 10},
-    {"species": "Human", "name": "Jayden", "status": "Alive", "rating": 10},
 
-]
 
 @app.route('/users/', methods=['GET', 'POST'])
 def userInt():
