@@ -45,7 +45,7 @@ def userInt():
         conn.commit()
         conn.close()
         return (new_data) , 201
-      else:   return "Character id already exists in database",200
+      else:   return "Character id already exists in database",409
       
     else:
       conn = sqlite3.connect("people.db")
@@ -67,12 +67,12 @@ def userDel():
 
     if cursor.fetchall() ==[]:
         
-      return "there is no entry for that character to delete" , 201
+      return "There is no entry for that character to delete" , 404
     else:  
       cursor.execute("DELETE FROM person WHERE id = ?",(localid))
       conn.commit()
       conn.close()
-      return "character deleted", 500  
+      return "Character deleted", 200  
 
 @app.route('/edit',methods=['PUT'])
 def entryEdit():
@@ -84,13 +84,13 @@ def entryEdit():
 
     if cursor.fetchall() ==[]:
         
-      return "there is no entry for that character to update" , 201
+      return "There is no entry for that character to update" , 404
     else:  
       cursor.execute("UPDATE person SET rating=? WHERE id=?",(user['rating'],localid))
 
       conn.commit()
       conn.close()
-    return "character updated", 500  
+    return "Character updated", 200  
    
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=105)
